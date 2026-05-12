@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - "backend/**"
+      - ".github/workflows/cicd-tienda-backend.yml"
 
 jobs:
   build-push-deploy-backend:
@@ -22,7 +23,7 @@ jobs:
         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Login en Amazon ECR (runner)
+    - name: Login en Amazon ECR
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build imagen Backend y push a ECR
@@ -40,10 +41,10 @@ jobs:
           --comment "Actualizar tienda-backend desde ECR" \
           --parameters '{"commands":[
             "set -e",
-            "aws ecr get-login-password --region '${{ secrets.AWS_REGION }}' | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}",
+            "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}",
             "docker pull ${{ secrets.ECR_REPO_URL_BACKEND }}:latest",
             "docker stop tienda-backend || true",
             "docker rm tienda-backend || true",
-            "docker run -d --name tienda-backend -p 3001:3001 \\\n-e DB_HOST=10.0.153.198 \\\n-e DB_USER=root \\\n-e DB_PASSWORD=admin123 \\\n-e DB_NAME=tienda_perritos \\\n${{ secrets.ECR_REPO_URL_BACKEND }}:latest"
+            "docker run -d --name tienda-backend -p 3001:3001 -e DB_HOST=10.0.153.198 -e DB_USER=root -e DB_PASSWORD=admin123 -e DB_NAME=tienda_perritos ${{ secrets.ECR_REPO_URL_BACKEND }}:latest"
           ]}' \
           --output text
